@@ -67,7 +67,12 @@ func main() {
 		certPath = "./dev-server.crt"
 	}
 
+	// non-dev variable defaults
+	if !isDev && port == "" {
+		port = "443"
+	}
 
+	// ...
 	r := gin.Default()
 
 	// CORS

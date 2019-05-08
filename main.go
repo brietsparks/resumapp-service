@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/brietsparks/resumapp-service/app"
 	"github.com/sirupsen/logrus"
+	_ "github.com/lib/pq"
 	"log"
 	"os"
 )
@@ -18,8 +19,8 @@ func main() {
 	defer file.Close()
 	log.SetOutput(file)
 
-	config := app.MakeSetConfigFromEnv(logger)(&app.Config{})
-	server := app.MakeNewServer(logger)(config)
+	config := app.SetConfigFromEnv(&app.Config{}, logger)
+	server := app.NewServer(config, logger)
 
 	server.Run()
 

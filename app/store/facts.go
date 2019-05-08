@@ -17,7 +17,7 @@ func NewFactsStore(DB *sqlx.DB, log Logger) *FactsStore {
     return &FactsStore{DB: DB}
 }
 
-func (store *FactsStore) getFactsByUserId(userId string) (string, error) {
+func (store *FactsStore) GetFactsByUserId(userId string) (string, error) {
 	var facts string
 
 	err := store.DB.Get(&facts, "SELECT facts FROM factdatas WHERE user_id = $1 LIMIT 1", userId, )
@@ -31,7 +31,7 @@ func (store *FactsStore) getFactsByUserId(userId string) (string, error) {
 	return facts, nil
 }
 
-func (store *FactsStore) setFactsByUserId(userId string, facts string) error {
+func (store *FactsStore) UpsertFactsByUserId(userId string, facts string) error {
 	_, err := store.DB.Exec("UPSERT INTO factdatas (user_id, facts) VALUES ($1, $2)", userId, facts)
 
 	return err

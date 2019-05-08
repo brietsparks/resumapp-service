@@ -14,14 +14,12 @@ type RoutesParams struct {
 }
 
 func Routes(p RoutesParams) {
-	setCookie := MakeSetCookie(p.SysDomain)
-	p.Router.GET("/health", NewHelloHandler(setCookie, p.AppName))
-	//p.Router.POST("/")
+	p.Router.GET("/health", NewHealthCheckHandler(p.AppName))
+	p.Router.GET("/user/:user_id/facts", NewGetFactsHandler(p.FactsStore, p.Logger))
 }
 
-func NewHelloHandler(setCookie SetCookie, appName string) gin.HandlerFunc {
+func NewHealthCheckHandler(appName string) gin.HandlerFunc {
 	HelloHandler := func(c *gin.Context) {
-		setCookie(c, "dummy", "ok", 3600)
 		c.JSON(200, gin.H{
 			"health": "ok",
 			"appName": appName,
@@ -31,12 +29,25 @@ func NewHelloHandler(setCookie SetCookie, appName string) gin.HandlerFunc {
 	return HelloHandler
 }
 
+func NewGetFactsHandler(factsStore *store.FactsStore, log Logger) gin.HandlerFunc {
+	GetFactsHandler := func(c *gin.Context) {
+		userId := c.Param("user_id")
+		facts, err := factsStore.GetFactsByUserId(userId)
 
-type SetCookie = func(c *gin.Context, name string, value string, maxAge int)
+		if err != nil {
+			c.JSON(500, gin.H{"message": "Error retrieving the data"})
+			return
+		}
 
-func MakeSetCookie(domain string) SetCookie {
-	return func(c *gin.Context, name string, value string, maxAge int) {
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.SetCookie(name, value, maxAge, "/", domain, true, true)
+		if facts == "" {
+			c.JSON(404, gin.H{"message": "No data found for user"})
+			return
+		}
+
+		c.JSON(200, gin.H{
+			"result": facts,
+		})
 	}
+
+	return GetFactsHandler
 }

@@ -19,6 +19,9 @@ type Config struct {
 	ClientOrigins []string
 	DbUrl         string
 	DbDriver      string
+	AuthUrl			string
+	AuthUsername  string
+	AuthPassword string
 }
 
 func SetConfigFromEnv(cfg *Config, log Logger) *Config {
@@ -29,13 +32,16 @@ func SetConfigFromEnv(cfg *Config, log Logger) *Config {
 	}
 
 	// variables from flags
-	var appDomain, sysDomain, port, appName, dbUrl, dbDriver string
+	var appDomain, sysDomain, port, appName, dbUrl, dbDriver, authUrl, authUsername, authPassword string
 	flag.StringVar(&appDomain, "appDomain", "", "Service domain")
 	flag.StringVar(&sysDomain, "sysDomain", "", "System domain")
 	flag.StringVar(&port, "port", "", "Service port")
 	flag.StringVar(&appName, "appName", "", "Unique string identifier of the service")
 	flag.StringVar(&dbUrl, "dbUrl", "", "Database url")
 	flag.StringVar(&dbDriver, "dbDriver", "", "Database driver")
+	flag.StringVar(&authUrl, "authUrl", "", "Auth server url")
+	flag.StringVar(&authUsername, "authUsername", "", "Auth server username")
+	flag.StringVar(&authPassword, "authPassword", "", "Auth server password")
 	flag.Parse()
 
 	// variables fallback to .env file
@@ -65,6 +71,19 @@ func SetConfigFromEnv(cfg *Config, log Logger) *Config {
 		dbDriver = os.Getenv("DB_DRIVER")
 	}
 
+	if authUrl == "" {
+		authUrl = os.Getenv("AUTH_URL")
+	}
+
+	if authUsername == "" {
+		authUsername = os.Getenv("AUTH_USERNAME")
+	}
+
+	if authPassword == "" {
+		authPassword =
+		 	os.Getenv("AUTH_PASSWORD")
+	}
+
 	// dev variable defaults
 	if isDev && secretKeyPath == "" {
 		secretKeyPath = "./dev-server.key"
@@ -90,6 +109,9 @@ func SetConfigFromEnv(cfg *Config, log Logger) *Config {
 	cfg.ClientOrigins = clientOrigins
 	cfg.DbDriver = dbDriver
 	cfg.DbUrl = dbUrl
+	cfg.AuthUrl = authUrl
+	cfg.AuthUsername = authUsername
+	cfg.AuthPassword = authPassword
 
 	return cfg
 }

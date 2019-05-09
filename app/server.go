@@ -14,10 +14,11 @@ type Server struct {
 	Run func()
 }
 
-func NewServer(cfg *Config, log Logger) *Server {
+func NewServer(cfg *Config, log Logger, authClient AuthClient) *Server {
 	s := &Server{Config: cfg}
 
 	r := gin.Default()
+	r.Use(gin.Recovery())
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     cfg.ClientOrigins,
@@ -36,6 +37,7 @@ func NewServer(cfg *Config, log Logger) *Server {
 		SysDomain: cfg.SysDomain,
 		Logger: log,
 		FactsStore: factsStore,
+		AuthClient: authClient,
 	})
 
 	port := fmt.Sprintf(":%s", cfg.Port)

@@ -29,6 +29,7 @@ func NewServer(cfg *Config, log Logger, authClient AuthClient) *Server {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// todo move this to main
 	db := NewDB(log, cfg.DbDriver, cfg.DbUrl)
 	factsStore := store.NewFactsStore(db, log)
 
@@ -41,22 +42,10 @@ func NewServer(cfg *Config, log Logger, authClient AuthClient) *Server {
 	})
 
 	port := fmt.Sprintf(":%s", cfg.Port)
-	if cfg.Insecure {
-		s.Run = func() {
-			fmt.Println(fmt.Sprintf("Listening on port %s INSECURE", port))
-			err := r.Run(port)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	} else {
-		s.Run = func() {
-			fmt.Println(fmt.Sprintf("Listening on port %s via TLS", port))
-			err := r.RunTLS(port, cfg.CertPath, cfg.SecretKeyPath)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
+	fmt.Println(fmt.Sprintf("Listening on port %s", port))
+	err := r.Run(port)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	return s

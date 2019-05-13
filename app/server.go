@@ -5,6 +5,7 @@ import (
 	"github.com/brietsparks/resumapp-service/app/store"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"time"
 )
@@ -14,34 +15,37 @@ type Server struct {
 	Run func()
 }
 
-func NewServer(cfg *Config, log Logger, authClient AuthClient) *Server {
-	s := &Server{Config: cfg}
+type ServerParams struct {
+	Config *Config
+	Log Logger
+	FactsStore *store.FactsStore
+	ProfilesStore *store.ProfilesStore
+}
+
+func NewServer(p ServerParams) *Server {
+	s := &Server{Config: p.Config}
 
 	r := gin.Default()
 	r.Use(gin.Recovery())
 
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     cfg.ClientOrigins,
+		AllowOrigins:     p.Config.ClientOrigins,
 		AllowMethods:     []string{http.MethodGet, http.MethodPost},
-		AllowHeaders:     []string{"Origin"},
+		AllowHeaders:     []string{"Origin", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Credentials"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// todo move this to main
-	db := NewDB(log, cfg.DbDriver, cfg.DbUrl)
-	factsStore := store.NewFactsStore(db, log)
-
 	Routes(RoutesParams{
 		Router: r,
-		SysDomain: cfg.SysDomain,
-		Logger: log,
-		FactsStore: factsStore,
-		AuthClient: authClient,
+		SysDomain: p.Config.SysDomain,
+		Logger: p.Log,
+		FactsStore: p.FactsStore,
+		ProfilesStore: p.ProfilesStore,
 	})
 
-	port := fmt.Sprintf(":%s", cfg.Port)
+	port := fmt.Sprintf(":%s", p.Config.Port)
 	fmt.Println(fmt.Sprintf("Listening on port %s", port))
 	err := r.Run(port)
 	if err != nil {

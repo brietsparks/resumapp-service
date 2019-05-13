@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/brietsparks/resumapp-service/app"
-	"github.com/keratin/authn-go/authn"
+	"github.com/brietsparks/resumapp-service/app/store"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	"log"
@@ -21,18 +21,21 @@ func main() {
 	logger.SetOutput(file)
 
 	config := app.SetConfigFromEnv(&app.Config{}, logger)
-	authClient, err := authn.NewClient(authn.Config{
-		Issuer:         config.AuthUrl,
-		Audience:       config.SysDomain,
-		Username:       config.AuthUsername,
-		Password:       config.AuthPassword,
-	})
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	server := app.NewServer(config, logger, authClient)
+	db := app.NewDB(logger, config.DbDriver, config.DbUrl)
+	factsStore := store.NewFactsStore(db)
+	profilesStore := store.NewProfilesStore(db)
+
+	server := app.NewServer(app.ServerParams{
+		Config: config,
+		Log: logger,
+		FactsStore: factsStore,
+		ProfilesStore: profilesStore,
+	})
 
 	server.Run()
 

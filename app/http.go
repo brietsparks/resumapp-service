@@ -18,6 +18,7 @@ type RoutesParams struct {
 
 func Routes(p RoutesParams) {
 	p.Router.GET("/handle-availability/:handle", NewGetHandleAvailabilityHandler(p.ProfilesStore, p.Logger))
+	p.Router.GET("/profile/:handle", NewGetProfileByHandleHandler(p.ProfilesStore, p.Logger))
 	p.Router.GET("/user/:user_id/profile", NewGetProfileByUserIdHandler(p.ProfilesStore, p.Logger))
 	p.Router.POST("user/:user_id/profile", NewPostProfileHandler(p.ProfilesStore, p.Logger))
 	p.Router.GET("/user/:user_id/facts", NewGetFactsHandler(p.FactsStore, p.Logger))
@@ -44,6 +45,29 @@ func NewGetHandleAvailabilityHandler(profilesStore *store.ProfilesStore, log Log
 	}
 
 	return GetHandleAvailabilityHandler
+}
+
+func NewGetProfileByHandleHandler(profilesStore *store.ProfilesStore, log Logger) gin.HandlerFunc {
+	GetProfileByHandleHandler := func(c *gin.Context) {
+		handle := c.Param("handle")
+
+		profile, err := profilesStore.GetProfileByHandle(handle)
+
+		if err != nil {
+			handleError(c, log, 500, err,
+				fmt.Sprintf("error retrieving profile by handle %s", handle))
+			return
+		}
+
+		if profile == nil {
+			c.JSON(404, gin.H{"message": fmt.Sprintf("no profile found for handle %s", handle)})
+			return
+		}
+
+		c.JSON(200, gin.H{"result": profile})
+	}
+
+	return GetProfileByHandleHandler
 }
 
 func NewGetProfileByUserIdHandler(profilesStore *store.ProfilesStore, log Logger) gin.HandlerFunc {

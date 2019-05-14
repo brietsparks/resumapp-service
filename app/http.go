@@ -130,7 +130,7 @@ func NewGetFactsHandler(factsStore *store.FactsStore, log Logger) gin.HandlerFun
 			return
 		}
 
-		c.JSON(200, gin.H{"result": facts,})
+		c.JSON(200, gin.H{"result": facts})
 	}
 
 	return GetFactsHandler
@@ -142,12 +142,9 @@ func NewPostFactsHandler(factsStore *store.FactsStore, log Logger) gin.HandlerFu
 	}
 
 	PostFactsHandler := func(c *gin.Context) {
-		token := c.GetHeader("Authorization")
-
-		c.JSON(200, gin.H{
-			"token": token,
-		})
-		return
+		//token := c.GetHeader("Authorization")
+		//c.JSON(200, gin.H{"token": token})
+		//return
 
 		userId := c.Param("user_id")
 

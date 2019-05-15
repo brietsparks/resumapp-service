@@ -54,14 +54,14 @@ func (store *ProfilesStore) UpsertProfileByUserId(userId string, profile models.
 		"lastName":      profile.LastName,
 		"email":         profile.Email,
 		"phone":         profile.Phone,
-		"profilePicUrl": profile.ProfilePicUrl,
+		"picUrl": profile.PicUrl,
 	}
 
 	_, err := store.DB.NamedExec(`
 		UPSERT INTO profiles (
-			user_id, handle, first_name, last_name, email, phone, profile_pic_url
+			user_id, handle, first_name, last_name, email, phone, pic_url
 		) VALUES (
-			:userId, :handle, :firstName, :lastName, :email, :phone, :profilePicUrl
+			:userId, :handle, :firstName, :lastName, :email, :phone, :picUrl
 		)
 	`, m)
 

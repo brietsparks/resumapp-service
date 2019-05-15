@@ -10,5 +10,5 @@ CREATE TABLE IF NOT EXISTS profiles (
   last_name VARCHAR (50),
   email VARCHAR (255),
   phone VARCHAR (15),
-  profile_pic_url VARCHAR (255)
+  pic_url VARCHAR (255)
 );

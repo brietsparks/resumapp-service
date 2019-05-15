@@ -7,5 +7,5 @@ type Profile struct {
 	LastName *string `db:"last_name" json:"lastName"`
 	Email *string `db:"email" json:"email"`
 	Phone *string `db:"phone" json:"phone"`
-	ProfilePicUrl *string `db:"profile_pic_url" json:"profilePicUrl"`
+	PicUrl *string `db:"pic_url" json:"picUrl"`
 }

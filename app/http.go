@@ -100,6 +100,8 @@ func NewPostProfileHandler(profilesStore *store.ProfilesStore, log Logger) gin.H
 		var profile models.Profile
 		c.BindJSON(&profile)
 
+		profile.UserId = userId
+
 		err := profilesStore.UpsertProfileByUserId(userId, profile)
 
 		if err != nil {

@@ -1,3 +1,5 @@
+use resumapp;
+
 CREATE TABLE IF NOT EXISTS facts (
   user_id VARCHAR(46) PRIMARY KEY,
   facts TEXT

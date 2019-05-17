@@ -34,9 +34,9 @@ func loadPublicKey(data []byte) (interface{}, error) {
 	return nil, fmt.Errorf("square/go-jose: parse error, got '%s' and '%s'", err0, err1)
 }
 
-type Validator func (r *http.Request) (*jwt.JSONWebToken, *jwt.Claims, error)
+type ValidateToken func (r *http.Request) (*jwt.JSONWebToken, *jwt.Claims, error)
 
-func NewValidator(auth0CertPath string, auth0Audience string, issuer string) Validator  {
+func NewValidateToken(auth0CertPath string, auth0Audience string, issuer string) ValidateToken  {
 	spew.Dump(auth0CertPath, auth0Audience, issuer)
 	p, err := ioutil.ReadFile(auth0CertPath)
 	if err != nil {

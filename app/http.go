@@ -2,12 +2,10 @@ package app
 
 import (
 	"fmt"
-	"github.com/auth0-community/go-auth0"
 	"github.com/brietsparks/resumapp-service/app/models"
 	"github.com/brietsparks/resumapp-service/app/store"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gin-gonic/gin"
-	"gopkg.in/square/go-jose.v2/jwt"
 	"net/http"
 )
 
@@ -18,18 +16,18 @@ type RoutesParams struct {
 	Logger         Logger
 	FactsStore     *store.FactsStore
 	ProfilesStore  *store.ProfilesStore
-	TokenValidator *auth0.JWTValidator
+	ValidateToken  ValidateToken
 }
 
 func Routes(p RoutesParams) {
-	p.Router.POST("/dummy", NewDummyHandler(p.TokenValidator))
+	p.Router.POST("/dummy", NewDummyHandler(p.ValidateToken))
 
 	p.Router.GET("/handle-availability/:handle", NewGetHandleAvailabilityHandler(p.ProfilesStore, p.Logger))
 	p.Router.GET("/profile/:handle", NewGetProfileByHandleHandler(p.ProfilesStore, p.Logger))
 	p.Router.GET("/user/:user_id/profile", NewGetProfileByUserIdHandler(p.ProfilesStore, p.Logger))
-	p.Router.POST("user/:user_id/profile", NewPostProfileHandler(p.ProfilesStore, p.Logger, p.TokenValidator))
+	p.Router.POST("user/:user_id/profile", NewPostProfileHandler(p.ProfilesStore, p.Logger, p.ValidateToken))
 	p.Router.GET("/user/:user_id/facts", NewGetFactsHandler(p.FactsStore, p.Logger))
-	p.Router.POST("/user/:user_id/facts", NewPostFactsHandler(p.FactsStore, p.Logger))
+	p.Router.POST("/user/:user_id/facts", NewPostFactsHandler(p.FactsStore, p.Logger, p.ValidateToken))
 }
 
 func handleError(c *gin.Context, log Logger, status int, err error, publicErr string) {
@@ -37,9 +35,9 @@ func handleError(c *gin.Context, log Logger, status int, err error, publicErr st
 	c.JSON(status, gin.H{"message": publicErr})
 }
 
-func NewDummyHandler(tokenValidator *auth0.JWTValidator) gin.HandlerFunc {
+func NewDummyHandler(validateToken ValidateToken) gin.HandlerFunc {
 	DummyHandler := func(c *gin.Context) {
-		token, err := tokenValidator.ValidateRequest(c.Request)
+		token, claims, err := validateToken(c.Request)
 		if err != nil {
 			spew.Dump(err)
 
@@ -51,8 +49,6 @@ func NewDummyHandler(tokenValidator *auth0.JWTValidator) gin.HandlerFunc {
 			return
 		}
 
-		claims := &jwt.Claims{}
-		tokenValidator.Claims(c.Request, token, claims)
 		userId := claims.Subject
 
 		c.JSON(http.StatusOK, gin.H{"user_id": userId})
@@ -129,16 +125,34 @@ func NewGetProfileByUserIdHandler(profilesStore *store.ProfilesStore, log Logger
 	return GetProfileHandler
 }
 
-func NewPostProfileHandler(profilesStore *store.ProfilesStore, log Logger, tokenValidator *auth0.JWTValidator) gin.HandlerFunc {
+func NewPostProfileHandler(profilesStore *store.ProfilesStore, log Logger, validateToken ValidateToken) gin.HandlerFunc {
 	PostProfileHandler := func(c *gin.Context) {
+		// authorize via token
+		_, claims, err := validateToken(c.Request)
+		if err != nil {
+			handleError(c, log, http.StatusUnauthorized, err,
+				fmt.Sprintf("invalid token"))
+			c.Abort()
+			return
+		}
+
+		subject := claims.Subject
 		userId := c.Param("user_id")
 
+		if subject != userId {
+			handleError(c, log, http.StatusBadRequest, err,
+				fmt.Sprintf("token and url parameter are not the same userId"))
+			c.Abort()
+			return
+		}
+
+		// save the data
 		var profile models.Profile
 		c.BindJSON(&profile)
 
 		profile.UserId = userId
 
-		err := profilesStore.UpsertProfileByUserId(userId, profile)
+		err = profilesStore.UpsertProfileByUserId(userId, profile)
 
 		if err != nil {
 			handleError(c, log, http.StatusInternalServerError, err,
@@ -175,18 +189,36 @@ func NewGetFactsHandler(factsStore *store.FactsStore, log Logger) gin.HandlerFun
 	return GetFactsHandler
 }
 
-func NewPostFactsHandler(factsStore *store.FactsStore, log Logger) gin.HandlerFunc {
+func NewPostFactsHandler(factsStore *store.FactsStore, log Logger, validateToken ValidateToken) gin.HandlerFunc {
 	type postFactsRequestPayload struct {
 		Facts string
 	}
 
 	PostFactsHandler := func(c *gin.Context) {
+		// authorize via token
+		_, claims, err := validateToken(c.Request)
+		if err != nil {
+			handleError(c, log, http.StatusUnauthorized, err,
+				fmt.Sprintf("invalid token"))
+			c.Abort()
+			return
+		}
+
+		subject := claims.Subject
 		userId := c.Param("user_id")
 
+		if subject != userId {
+			handleError(c, log, http.StatusBadRequest, err,
+				fmt.Sprintf("token and url parameter are not the same userId"))
+			c.Abort()
+			return
+		}
+
+		// save the data
 		var p postFactsRequestPayload
 		c.BindJSON(&p)
 
-		err := factsStore.UpsertFactsByUserId(userId, p.Facts)
+		err = factsStore.UpsertFactsByUserId(userId, p.Facts)
 
 		if err != nil {
 			handleError(c, log, http.StatusInternalServerError, err,

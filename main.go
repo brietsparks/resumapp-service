@@ -29,12 +29,14 @@ func main() {
 	db := app.NewDB(logger, config.DbDriver, config.DbUrl)
 	factsStore := store.NewFactsStore(db)
 	profilesStore := store.NewProfilesStore(db)
+	tokenValidator := app.NewValidator(config.Auth0CertPath, config.Auth0Audience, config.Auth0Issuer)
 
 	server := app.NewServer(app.ServerParams{
 		Config: config,
 		Log: logger,
 		FactsStore: factsStore,
 		ProfilesStore: profilesStore,
+		TokenValidator: tokenValidator,
 	})
 
 	server.Run()

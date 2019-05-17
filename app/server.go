@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/auth0-community/go-auth0"
 	"github.com/brietsparks/resumapp-service/app/store"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -20,6 +21,7 @@ type ServerParams struct {
 	Log Logger
 	FactsStore *store.FactsStore
 	ProfilesStore *store.ProfilesStore
+	TokenValidator *auth0.JWTValidator
 }
 
 func NewServer(p ServerParams) *Server {
@@ -43,6 +45,7 @@ func NewServer(p ServerParams) *Server {
 		Logger: p.Log,
 		FactsStore: p.FactsStore,
 		ProfilesStore: p.ProfilesStore,
+		TokenValidator: p.TokenValidator,
 	})
 
 	port := fmt.Sprintf(":%s", p.Config.Port)

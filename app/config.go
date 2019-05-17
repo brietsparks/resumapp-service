@@ -19,6 +19,9 @@ type Config struct {
 	ClientOrigins []string
 	DbUrl         string
 	DbDriver      string
+	Auth0CertPath string
+	Auth0Audience string
+	Auth0Issuer	  string
 }
 
 func SetConfigFromEnv(cfg *Config, log Logger) *Config {
@@ -29,13 +32,18 @@ func SetConfigFromEnv(cfg *Config, log Logger) *Config {
 	}
 
 	// variables from flags
-	var appDomain, sysDomain, port, appName, dbUrl, dbDriver string
+	var appDomain, sysDomain, port, appName, dbUrl, dbDriver, auth0CertPath, auth0Audience, auth0Issuer string
+
 	flag.StringVar(&appDomain, "appDomain", "", "Service domain")
 	flag.StringVar(&sysDomain, "sysDomain", "", "System domain")
 	flag.StringVar(&port, "port", "", "Service port")
 	flag.StringVar(&appName, "appName", "", "Unique string identifier of the service")
 	flag.StringVar(&dbUrl, "dbUrl", "", "Database url")
 	flag.StringVar(&dbDriver, "dbDriver", "", "Database driver")
+	flag.StringVar(&auth0CertPath, "auth0CertPath", "", "Auth0 cert path")
+	flag.StringVar(&auth0Audience, "auth0Audience", "", "Auth0 client id")
+	flag.StringVar(&auth0Issuer, "auth0Issuer", "", "Auth0 issuer url")
+
 	flag.Parse()
 
 	// variables fallback to .env file
@@ -55,6 +63,19 @@ func SetConfigFromEnv(cfg *Config, log Logger) *Config {
 	if port == "" {
 		port = os.Getenv("PORT")
 	}
+
+	if auth0CertPath == "" {
+		auth0CertPath = os.Getenv("AUTH0_CERT_PATH")
+	}
+
+	if auth0Audience == "" {
+		auth0Audience = os.Getenv("AUTH0_AUDIENCE")
+	}
+
+	if auth0Issuer == "" {
+		auth0Issuer = os.Getenv("AUTH0_ISSUER")
+	}
+
 	clientOrigins := strings.Split(os.Getenv("CLIENT_ORIGINS"), ",")
 
 	if dbUrl == "" {
@@ -90,6 +111,9 @@ func SetConfigFromEnv(cfg *Config, log Logger) *Config {
 	cfg.ClientOrigins = clientOrigins
 	cfg.DbDriver = dbDriver
 	cfg.DbUrl = dbUrl
+	cfg.Auth0CertPath = auth0CertPath
+	cfg.Auth0Audience = auth0Audience
+	cfg.Auth0Issuer = auth0Issuer
 
 	return cfg
 }

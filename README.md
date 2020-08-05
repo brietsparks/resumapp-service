@@ -1,3 +1,3 @@
-# Resumapp (BriefPage.com data service)
+# Resumapp Data Service
 
-The backend data service for [briefpage.com](http://briefpage.com)
+The backend data service for Resumapp
